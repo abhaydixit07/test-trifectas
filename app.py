@@ -210,3 +210,6 @@ def generate_word():
     }
     print(COUPLED)
     return jsonify(word_data)
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
