@@ -3,8 +3,9 @@
 
 from flask import Flask, jsonify
 import random
-import sounddevice as sd
-from scipy.io.wavfile import write
+import wave
+import numpy as np
+import speech_recognition as sr
 from openai import OpenAI
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -105,14 +106,24 @@ def record():
 
     print('Recording')
 
-    # Record audio
-    myrecording = sd.rec(int(seconds * fs), samplerate=fs, channels=2, dtype='int16')
-    sd.wait()  # Wait until recording is finished
+    # Initialize recognizer
+    recognizer = sr.Recognizer()
+
+    # Use the microphone as source
+    with sr.Microphone(sample_rate=fs) as source:
+        audio_data = recognizer.record(source, duration=seconds)
 
     print('Finished recording')
 
-    # Save the recorded data as a WAV file
-    write(filename, fs, myrecording)# chunk = 1024  # Record in chunks of 1024 samples
+    # Convert audio data to numpy array
+    audio_array = np.frombuffer(audio_data.get_raw_data(), dtype=np.int16)
+    with wave.open(filename, 'w') as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(np.dtype('int16').itemsize)
+        wf.setframerate(fs)
+        wf.writeframes(audio_array.tobytes())
+
+# Save the recorded data as a WAV file using the wave module# chunk = 1024  # Record in chunks of 1024 samples
     # sample_format = pyaudio.paInt16  # 16 bits per sample
     # channels = 2
     # fs = 44100  # Record at 44100 samples per second
